@@ -16,7 +16,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _loginController = TextEditingController(text: ApiConstants.testLogin);
-  final _passwordController = TextEditingController(text: ApiConstants.testPassword);
+  final _passwordController = TextEditingController(
+    text: ApiConstants.testPassword,
+  );
   bool _obscurePassword = true;
 
   @override
@@ -29,11 +31,11 @@ class _LoginPageState extends State<LoginPage> {
   void _submitLogin() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            LoginSubmittedEvent(
-              login: _loginController.text,
-              password: _passwordController.text,
-            ),
-          );
+        LoginSubmittedEvent(
+          login: _loginController.text,
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -81,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.primaryLight.withOpacity(0.12),
+                          color: AppColors.primaryLight.withValues(alpha: 0.12),
                         ),
                         child: const Icon(
                           Icons.show_chart_rounded,
@@ -103,7 +105,9 @@ class _LoginPageState extends State<LoginPage> {
                         'Sign in to access user profile, trading signals, and partner promotions.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -112,10 +116,10 @@ class _LoginPageState extends State<LoginPage> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.1),
+                          color: AppColors.secondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.secondary.withOpacity(0.3),
+                            color: AppColors.secondary.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -143,7 +147,9 @@ class _LoginPageState extends State<LoginPage> {
                                     'Login: ${ApiConstants.testLogin}  |  Pass: ${ApiConstants.testPassword}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                      color: isDark
+                                          ? AppColors.textPrimaryDark
+                                          : AppColors.textPrimaryLight,
                                     ),
                                   ),
                                 ],
@@ -167,7 +173,9 @@ class _LoginPageState extends State<LoginPage> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           hintText: 'Enter account login',
-                          prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                          prefixIcon: Icon(
+                            Icons.account_balance_wallet_outlined,
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -227,7 +235,9 @@ class _LoginPageState extends State<LoginPage> {
                                     width: 24,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
                                   )
                                 : const Text('Authorize Account'),

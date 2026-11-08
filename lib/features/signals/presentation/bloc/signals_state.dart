@@ -17,7 +17,7 @@ abstract class SignalsState extends Equatable {
 }
 
 class SignalsInitial extends SignalsState {
-  SignalsInitial({
+  const SignalsInitial({
     required super.selectedPairs,
     required super.fromDate,
     required super.toDate,
@@ -25,7 +25,7 @@ class SignalsInitial extends SignalsState {
 }
 
 class SignalsLoading extends SignalsState {
-  SignalsLoading({
+  const SignalsLoading({
     required super.selectedPairs,
     required super.fromDate,
     required super.toDate,
@@ -35,7 +35,7 @@ class SignalsLoading extends SignalsState {
 class SignalsLoaded extends SignalsState {
   final List<AnalyticSignal> signals;
 
-  SignalsLoaded({
+  const SignalsLoaded({
     required this.signals,
     required super.selectedPairs,
     required super.fromDate,
@@ -49,7 +49,7 @@ class SignalsLoaded extends SignalsState {
 class SignalsError extends SignalsState {
   final String message;
 
-  SignalsError({
+  const SignalsError({
     required this.message,
     required super.selectedPairs,
     required super.fromDate,

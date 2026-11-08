@@ -12,15 +12,15 @@ class ApiClient {
     if (client != null) {
       _client = client;
     } else {
-      // Configure HttpClient with bad certificate override for SSL expired hosts
       final ioClient = HttpClient()
-        ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-          // Allow bad certificate for contentdatapro SOAP domain with expired cert
-          if (host.contains('contentdatapro.com') || host.contains('ifxdb.com')) {
-            return true;
-          }
-          return true; // Safe override for test environment endpoints
-        }
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+              if (host.contains('contentdatapro.com') ||
+                  host.contains('ifxdb.com')) {
+                return true;
+              }
+              return true;
+            }
         ..connectionTimeout = const Duration(seconds: 15);
       _client = IOClient(ioClient);
     }
@@ -48,7 +48,9 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException catch (e) {
-      throw NetworkException(message: 'Network connection failed: ${e.message}');
+      throw NetworkException(
+        message: 'Network connection failed: ${e.message}',
+      );
     } on TimeoutException {
       throw NetworkException(message: 'Request timed out. Please try again.');
     } catch (e) {
@@ -70,10 +72,7 @@ class ApiClient {
         uri = uri.replace(queryParameters: queryParameters);
       }
 
-      final requestHeaders = {
-        'Accept': 'application/json',
-        ...?headers,
-      };
+      final requestHeaders = {'Accept': 'application/json', ...?headers};
 
       final response = await _client
           .get(uri, headers: requestHeaders)
@@ -81,7 +80,9 @@ class ApiClient {
 
       return _handleResponse(response);
     } on SocketException catch (e) {
-      throw NetworkException(message: 'Network connection failed: ${e.message}');
+      throw NetworkException(
+        message: 'Network connection failed: ${e.message}',
+      );
     } on TimeoutException {
       throw NetworkException(message: 'Request timed out. Please try again.');
     } catch (e) {
@@ -118,7 +119,9 @@ class ApiClient {
         );
       }
     } on SocketException catch (e) {
-      throw NetworkException(message: 'Network connection failed: ${e.message}');
+      throw NetworkException(
+        message: 'Network connection failed: ${e.message}',
+      );
     } on TimeoutException {
       throw NetworkException(message: 'Request timed out.');
     } catch (e) {
@@ -136,7 +139,10 @@ class ApiClient {
         return response.body; // Primitive string responses (like token strings)
       }
     } else if (response.statusCode == 401 || response.statusCode == 403) {
-      throw AuthException(message: 'Authorization failed or session expired (${response.statusCode})');
+      throw AuthException(
+        message:
+            'Authorization failed or session expired (${response.statusCode})',
+      );
     } else {
       throw ServerException(
         message: 'Server error (${response.statusCode})',

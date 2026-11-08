@@ -20,7 +20,10 @@ class _PromoPageState extends State<PromoPage> {
     context.read<PromoBloc>().add(FetchPromoEvent());
   }
 
-  Future<void> _launchExternalUrl(BuildContext context, String urlString) async {
+  Future<void> _launchExternalUrl(
+    BuildContext context,
+    String urlString,
+  ) async {
     final Uri? uri = Uri.tryParse(urlString);
     if (uri != null && await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -74,7 +77,9 @@ class _PromoPageState extends State<PromoPage> {
                 child: Text(
                   'No promo materials available.',
                   style: TextStyle(
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
                   ),
                 ),
               );
@@ -87,7 +92,7 @@ class _PromoPageState extends State<PromoPage> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: state.promos.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, _) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final promo = state.promos[index];
                   final btnColor = _parseHexColor(promo.buttonColor);
@@ -106,7 +111,7 @@ class _PromoPageState extends State<PromoPage> {
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
-                                  color: btnColor.withOpacity(0.12),
+                                  color: btnColor.withValues(alpha: 0.12),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -127,15 +132,20 @@ class _PromoPageState extends State<PromoPage> {
                                   ),
                                 );
                               },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
-                                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                );
-                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: isDark
+                                          ? const Color(0xFF1E293B)
+                                          : const Color(0xFFF1F5F9),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    );
+                                  },
                             ),
                           ),
 
@@ -155,7 +165,8 @@ class _PromoPageState extends State<PromoPage> {
                               const SizedBox(height: 16),
 
                               ElevatedButton(
-                                onPressed: () => _launchExternalUrl(context, promo.link),
+                                onPressed: () =>
+                                    _launchExternalUrl(context, promo.link),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: btnColor,
                                   foregroundColor: Colors.white,
@@ -169,10 +180,15 @@ class _PromoPageState extends State<PromoPage> {
                                   children: [
                                     Text(
                                       promo.buttonText,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Icon(Icons.open_in_new_rounded, size: 18),
+                                    const Icon(
+                                      Icons.open_in_new_rounded,
+                                      size: 18,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -192,18 +208,26 @@ class _PromoPageState extends State<PromoPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 56, color: AppColors.sellRed),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 56,
+                      color: AppColors.sellRed,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Failed to Load Promo Materials',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       state.message,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
                       ),
                     ),
                     const SizedBox(height: 20),

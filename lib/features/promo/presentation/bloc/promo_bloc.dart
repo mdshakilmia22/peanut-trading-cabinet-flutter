@@ -7,9 +7,7 @@ import 'promo_state.dart';
 class PromoBloc extends Bloc<PromoEvent, PromoState> {
   final PromoRepository _promoRepository;
 
-  PromoBloc({required PromoRepository promoRepository})
-      : _promoRepository = promoRepository,
-        super(PromoInitial()) {
+  PromoBloc({required this._promoRepository}) : super(PromoInitial()) {
     on<FetchPromoEvent>(_onFetchPromo);
     on<RefreshPromoEvent>(_onRefreshPromo);
   }

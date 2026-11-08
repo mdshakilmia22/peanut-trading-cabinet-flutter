@@ -7,13 +7,14 @@ import 'signals_state.dart';
 class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
   final SignalsRepository _signalsRepository;
 
-  SignalsBloc({required SignalsRepository signalsRepository})
-      : _signalsRepository = signalsRepository,
-        super(SignalsInitial(
+  SignalsBloc({required this._signalsRepository})
+    : super(
+        SignalsInitial(
           selectedPairs: const ['EURUSD', 'GBPUSD', 'USDJPY'],
           fromDate: DateTime.now().subtract(const Duration(days: 30)),
           toDate: DateTime.now(),
-        )) {
+        ),
+      ) {
     on<FetchSignalsEvent>(_onFetchSignals);
     on<TogglePairFilterEvent>(_onTogglePairFilter);
     on<SelectDateRangeEvent>(_onSelectDateRange);
@@ -23,11 +24,13 @@ class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
     FetchSignalsEvent event,
     Emitter<SignalsState> emit,
   ) async {
-    emit(SignalsLoading(
-      selectedPairs: event.pairs,
-      fromDate: event.fromDate,
-      toDate: event.toDate,
-    ));
+    emit(
+      SignalsLoading(
+        selectedPairs: event.pairs,
+        fromDate: event.fromDate,
+        toDate: event.toDate,
+      ),
+    );
 
     try {
       final signals = await _signalsRepository.getAnalyticSignals(
@@ -38,26 +41,32 @@ class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
         toDate: event.toDate,
       );
 
-      emit(SignalsLoaded(
-        signals: signals,
-        selectedPairs: event.pairs,
-        fromDate: event.fromDate,
-        toDate: event.toDate,
-      ));
+      emit(
+        SignalsLoaded(
+          signals: signals,
+          selectedPairs: event.pairs,
+          fromDate: event.fromDate,
+          toDate: event.toDate,
+        ),
+      );
     } on Failure catch (failure) {
-      emit(SignalsError(
-        message: failure.message,
-        selectedPairs: event.pairs,
-        fromDate: event.fromDate,
-        toDate: event.toDate,
-      ));
+      emit(
+        SignalsError(
+          message: failure.message,
+          selectedPairs: event.pairs,
+          fromDate: event.fromDate,
+          toDate: event.toDate,
+        ),
+      );
     } catch (e) {
-      emit(SignalsError(
-        message: 'Error fetching signals: $e',
-        selectedPairs: event.pairs,
-        fromDate: event.fromDate,
-        toDate: event.toDate,
-      ));
+      emit(
+        SignalsError(
+          message: 'Error fetching signals: $e',
+          selectedPairs: event.pairs,
+          fromDate: event.fromDate,
+          toDate: event.toDate,
+        ),
+      );
     }
   }
 
@@ -74,21 +83,25 @@ class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
       currentPairs.add(event.pair);
     }
 
-    emit(SignalsInitial(
-      selectedPairs: currentPairs,
-      fromDate: state.fromDate,
-      toDate: state.toDate,
-    ));
+    emit(
+      SignalsInitial(
+        selectedPairs: currentPairs,
+        fromDate: state.fromDate,
+        toDate: state.toDate,
+      ),
+    );
   }
 
   void _onSelectDateRange(
     SelectDateRangeEvent event,
     Emitter<SignalsState> emit,
   ) {
-    emit(SignalsInitial(
-      selectedPairs: state.selectedPairs,
-      fromDate: event.fromDate,
-      toDate: event.toDate,
-    ));
+    emit(
+      SignalsInitial(
+        selectedPairs: state.selectedPairs,
+        fromDate: event.fromDate,
+        toDate: event.toDate,
+      ),
+    );
   }
 }

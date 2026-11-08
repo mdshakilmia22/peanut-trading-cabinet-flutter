@@ -26,11 +26,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       context.read<ProfileBloc>().add(
-            FetchProfileEvent(
-              login: authState.tokens.login,
-              peanutToken: authState.tokens.peanutToken,
-            ),
-          );
+        FetchProfileEvent(
+          login: authState.tokens.login,
+          peanutToken: authState.tokens.peanutToken,
+        ),
+      );
     }
   }
 
@@ -63,11 +63,11 @@ class _ProfilePageState extends State<ProfilePage> {
           return RefreshIndicator(
             onRefresh: () async {
               context.read<ProfileBloc>().add(
-                    RefreshProfileEvent(
-                      login: tokens.login,
-                      peanutToken: tokens.peanutToken,
-                    ),
-                  );
+                RefreshProfileEvent(
+                  login: tokens.login,
+                  peanutToken: tokens.peanutToken,
+                ),
+              );
             },
             child: BlocBuilder<ProfileBloc, ProfileState>(
               builder: (context, state) {
@@ -90,7 +90,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 CircleAvatar(
                                   radius: 32,
-                                  backgroundColor: AppColors.primaryLight.withOpacity(0.15),
+                                  backgroundColor: AppColors.primaryLight
+                                      .withValues(alpha: 0.15),
                                   child: Text(
                                     info.login.toString().substring(0, 2),
                                     style: const TextStyle(
@@ -103,31 +104,41 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         info.name,
-                                        style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         'Account #${info.login}',
                                         style: TextStyle(
-                                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                          color: isDark
+                                              ? AppColors.textSecondaryDark
+                                              : AppColors.textSecondaryLight,
                                           fontSize: 14,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
                                       Wrap(
                                         spacing: 8,
+                                        runSpacing: 8,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: AppColors.accent.withOpacity(0.15),
-                                              borderRadius: BorderRadius.circular(6),
+                                              color: AppColors.accent
+                                                  .withValues(alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
                                             ),
                                             child: const Text(
                                               'Verified Tier 1',
@@ -139,10 +150,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: AppColors.secondary.withOpacity(0.15),
-                                              borderRadius: BorderRadius.circular(6),
+                                              color: AppColors.secondary
+                                                  .withValues(alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
                                             ),
                                             child: Text(
                                               'Leverage 1:${info.leverage}',
@@ -204,7 +220,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           'Personal & Security Information',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -232,7 +250,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 icon: Icons.key_rounded,
                                 title: 'Peanut Token Status',
                                 value: 'Active & Validated',
-                                subtitle: '${tokens.peanutToken.substring(0, 8)}...',
+                                subtitle:
+                                    '${tokens.peanutToken.substring(0, 8)}...',
                               ),
                             ],
                           ),
@@ -243,11 +262,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         OutlinedButton.icon(
                           onPressed: () {
                             context.read<ProfileBloc>().add(
-                                  FetchProfileEvent(
-                                    login: tokens.login,
-                                    peanutToken: tokens.peanutToken,
-                                  ),
-                                );
+                              FetchProfileEvent(
+                                login: tokens.login,
+                                peanutToken: tokens.peanutToken,
+                              ),
+                            );
                           },
                           icon: const Icon(Icons.refresh_rounded),
                           label: const Text('Re-Fetch Profile Data'),
@@ -268,18 +287,26 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 64, color: AppColors.sellRed),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: AppColors.sellRed,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Failed to Load Profile',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             state.message,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -326,7 +353,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   title,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
                   ),
                 ),
                 Icon(icon, size: 20, color: color),
@@ -337,7 +366,9 @@ class _ProfilePageState extends State<ProfilePage> {
               value,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ),
           ],
@@ -355,8 +386,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return ListTile(
       leading: Icon(icon, color: AppColors.primaryLight),
-      title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-      subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      subtitle: subtitle != null
+          ? Text(subtitle, style: const TextStyle(fontSize: 12))
+          : null,
       trailing: Text(
         value,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),

@@ -7,9 +7,7 @@ import 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository _profileRepository;
 
-  ProfileBloc({required ProfileRepository profileRepository})
-      : _profileRepository = profileRepository,
-        super(ProfileInitial()) {
+  ProfileBloc({required this._profileRepository}) : super(ProfileInitial()) {
     on<FetchProfileEvent>(_onFetchProfile);
     on<RefreshProfileEvent>(_onRefreshProfile);
   }

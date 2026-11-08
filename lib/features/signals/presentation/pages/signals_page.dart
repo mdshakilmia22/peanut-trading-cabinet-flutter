@@ -28,14 +28,14 @@ class _SignalsPageState extends State<SignalsPage> {
     if (authState is Authenticated) {
       final blocState = context.read<SignalsBloc>().state;
       context.read<SignalsBloc>().add(
-            FetchSignalsEvent(
-              login: authState.tokens.login,
-              partnerToken: authState.tokens.partnerToken,
-              pairs: blocState.selectedPairs,
-              fromDate: blocState.fromDate,
-              toDate: blocState.toDate,
-            ),
-          );
+        FetchSignalsEvent(
+          login: authState.tokens.login,
+          partnerToken: authState.tokens.partnerToken,
+          pairs: blocState.selectedPairs,
+          fromDate: blocState.fromDate,
+          toDate: blocState.toDate,
+        ),
+      );
     }
   }
 
@@ -67,11 +67,11 @@ class _SignalsPageState extends State<SignalsPage> {
     if (pickedRange != null) {
       if (mounted) {
         context.read<SignalsBloc>().add(
-              SelectDateRangeEvent(
-                fromDate: pickedRange.start,
-                toDate: pickedRange.end,
-              ),
-            );
+          SelectDateRangeEvent(
+            fromDate: pickedRange.start,
+            toDate: pickedRange.end,
+          ),
+        );
         _triggerFetch();
       }
     }
@@ -122,7 +122,9 @@ class _SignalsPageState extends State<SignalsPage> {
                           label: Text(pair),
                           selected: isSelected,
                           onSelected: (_) {
-                            context.read<SignalsBloc>().add(TogglePairFilterEvent(pair));
+                            context.read<SignalsBloc>().add(
+                              TogglePairFilterEvent(pair),
+                            );
                             _triggerFetch();
                           },
                           selectedColor: AppColors.primaryLight,
@@ -130,8 +132,12 @@ class _SignalsPageState extends State<SignalsPage> {
                           labelStyle: TextStyle(
                             color: isSelected
                                 ? Colors.white
-                                : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                : (isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight),
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
                       );
@@ -198,7 +204,7 @@ class _SignalsPageState extends State<SignalsPage> {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: state.signals.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final signal = state.signals[index];
                         return _buildSignalCard(context, signal, isDark);
@@ -212,18 +218,26 @@ class _SignalsPageState extends State<SignalsPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.wifi_off_rounded, size: 56, color: AppColors.sellRed),
+                          const Icon(
+                            Icons.wifi_off_rounded,
+                            size: 56,
+                            color: AppColors.sellRed,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Failed to Load Signals',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             state.message,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -268,11 +282,13 @@ class _SignalsPageState extends State<SignalsPage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: actionColor.withOpacity(0.12),
+                        color: actionColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        isBuy ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        isBuy
+                            ? Icons.arrow_upward_rounded
+                            : Icons.arrow_downward_rounded,
                         color: actionColor,
                         size: 20,
                       ),
@@ -291,7 +307,9 @@ class _SignalsPageState extends State<SignalsPage> {
                           timeFormat.format(signal.dateTime),
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
                           ),
                         ),
                       ],
@@ -299,11 +317,16 @@ class _SignalsPageState extends State<SignalsPage> {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: actionColor.withOpacity(0.15),
+                    color: actionColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: actionColor.withOpacity(0.4)),
+                    border: Border.all(
+                      color: actionColor.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     signal.action,
@@ -322,17 +345,30 @@ class _SignalsPageState extends State<SignalsPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildPriceItem('Entry Price', signal.price.toStringAsFixed(4)),
+                  _buildPriceItem(
+                    'Entry Price',
+                    signal.price.toStringAsFixed(4),
+                  ),
                   if (signal.takeProfit != null)
-                    _buildPriceItem('Take Profit', signal.takeProfit!.toStringAsFixed(4), color: AppColors.buyGreen),
+                    _buildPriceItem(
+                      'Take Profit',
+                      signal.takeProfit!.toStringAsFixed(4),
+                      color: AppColors.buyGreen,
+                    ),
                   if (signal.stopLoss != null)
-                    _buildPriceItem('Stop Loss', signal.stopLoss!.toStringAsFixed(4), color: AppColors.sellRed),
+                    _buildPriceItem(
+                      'Stop Loss',
+                      signal.stopLoss!.toStringAsFixed(4),
+                      color: AppColors.sellRed,
+                    ),
                 ],
               ),
             ),
@@ -344,7 +380,9 @@ class _SignalsPageState extends State<SignalsPage> {
               style: TextStyle(
                 fontSize: 13,
                 height: 1.4,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ),
           ],
@@ -358,7 +396,10 @@ class _SignalsPageState extends State<SignalsPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryLight),
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.textSecondaryLight,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
@@ -383,19 +424,25 @@ class _SignalsPageState extends State<SignalsPage> {
             Icon(
               Icons.query_stats_rounded,
               size: 64,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
             const SizedBox(height: 16),
             Text(
               'No Signals Found',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Try adjusting your currency pair selections or date range filters.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
             ),
           ],

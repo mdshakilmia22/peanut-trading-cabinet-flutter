@@ -2,9 +2,7 @@ import 'dart:convert';
 import '../constants/api_constants.dart';
 
 class SoapParser {
-  /// Parses SOAP XML response for GetCCPromoResult and returns cleaned JSON string or Map
   static String extractGetCCPromoResultJson(String xmlResponseBody) {
-    // Look for <GetCCPromoResult> content
     final match = RegExp(
       r'<GetCCPromoResult[^>]*>(.*?)</GetCCPromoResult>',
       dotAll: true,
@@ -14,7 +12,6 @@ class SoapParser {
     if (match != null && match.groupCount >= 1) {
       String jsonText = match.group(1)!;
 
-      // Unescape XML entities if present (&amp;, &lt;, &gt;, &quot;, &#39;)
       jsonText = jsonText
           .replaceAll('&lt;', '<')
           .replaceAll('&gt;', '>')
@@ -22,7 +19,6 @@ class SoapParser {
           .replaceAll('&apos;', "'")
           .replaceAll('&amp;', '&');
 
-      // Python boolean representation fallback fix (False -> false, True -> true)
       jsonText = jsonText
           .replaceAll(': False', ': false')
           .replaceAll(': True', ': true');
@@ -36,7 +32,9 @@ class SoapParser {
       return jsonText;
     }
 
-    throw FormatException('Could not locate <GetCCPromoResult> in SOAP response');
+    throw FormatException(
+      'Could not locate <GetCCPromoResult> in SOAP response',
+    );
   }
 
   /// Converts promo JSON string into List of promo item maps
@@ -50,7 +48,6 @@ class SoapParser {
           final item = Map<String, dynamic>.from(value);
           item['promo_key'] = key;
 
-          // Replace image domain in individual item image field as safety check
           if (item['image'] != null && item['image'] is String) {
             item['image'] = (item['image'] as String).replaceAll(
               ApiConstants.originalPromoImageDomain,
