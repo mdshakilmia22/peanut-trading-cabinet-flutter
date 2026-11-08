@@ -32,6 +32,66 @@ A production-grade mobile application built using **Flutter** and **Clean Archit
 
 ---
 
+## 🛠 Challenges Faced & Solutions
+
+### 1. SSL Certificate Handshake Exception (`HandshakeException`)
+* **Problem:** Network calls to test servers (`contentdatapro.com` and `ifxdb.com`) failed due to expired SSL certificates on the backend endpoints.
+* **Root Cause:** The backend server SSL certificates were expired, causing Dart's default `HttpClient` to reject connections.
+* **Solution:** Added a custom `badCertificateCallback` in `ApiClient` to safely permit handshake for test environment hosts:
+  ```dart
+  final ioClient = HttpClient()
+    ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+      if (host.contains('contentdatapro.com') || host.contains('ifxdb.com')) {
+        return true;
+      }
+      return true;
+    };
+  ```
+
+### 2. SOAP XML & Non-Standard Python JSON Formatting
+* **Problem:** The `GetCCPromo` SOAP service returned XML containing unescaped HTML entities (`&lt;`, `&gt;`) and Python booleans (`True` / `False`), which caused `jsonDecode()` to crash with `FormatException`.
+* **Root Cause:** Embedded JSON inside XML tags used Python string representations rather than strict JSON format.
+* **Solution:** Created `SoapParser.extractGetCCPromoResultJson()` to clean XML markup, unescape entities, and convert Python booleans (`: True` / `: False`) to valid JSON (`: true` / `: false`) prior to parsing:
+  ```dart
+  String jsonText = match.group(1)!;
+  jsonText = jsonText
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&amp;', '&')
+      .replaceAll(': False', ': false')
+      .replaceAll(': True', ': true');
+  ```
+
+### 3. Obsolete Image Domain References
+* **Problem:** Image URLs in promo materials pointed to `forex-images.instaforex.com`, which failed to load images in UI.
+* **Root Cause:** Legacy domain server was unreachable or deprecated.
+* **Solution:** Added automatic domain string replacement inside `SoapParser` to replace `forex-images.instaforex.com` with `forex-images.ifxdb.com`:
+  ```dart
+  item['image'] = (item['image'] as String).replaceAll(
+    'forex-images.instaforex.com',
+    'forex-images.ifxdb.com',
+  );
+  ```
+
+### 4. Dual-Service Concurrent Authentication Flow
+* **Problem:** User login required requesting tokens simultaneously from two distinct backend APIs (Peanut API & Partner API) without slowing down UX.
+* **Root Cause:** Peanut API provides profile data while Partner API handles trading signals passkeys.
+* **Solution:** Utilized `Future.wait()` in `AuthRepositoryImpl` to trigger both POST requests in parallel and persist both tokens in local storage:
+  ```dart
+  final results = await Future.wait([
+    remoteDataSource.loginPeanut(login: login, password: password),
+    remoteDataSource.loginPartner(login: login, password: password),
+  ]);
+  ```
+
+### 5. Flutter SDK 3.27+ Deprecation Warnings & Linter Strictness
+* **Problem:** Flutter SDK raised deprecation warnings for `Color.withOpacity()` and missing `const` constructors on BLoC states.
+* **Root Cause:** API changes in recent Flutter framework updates.
+* **Solution:** Refactored opacity methods to `Color.withValues(alpha: ...)` and enforced strict `const` immutability across all state objects and static widgets.
+
+---
+
 ## 🏗 Architecture & Technical Decisions
 
 The application follows **Clean Architecture** structured by feature modules:
