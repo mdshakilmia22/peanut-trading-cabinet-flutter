@@ -1,129 +1,81 @@
-# Client Cabinet & Trading Signals Application
+# Client Cabinet & Trading Signals
 
-A production-grade mobile application built using **Flutter** and **Clean Architecture** with **BLoC/Cubit** state management. The app integrates two backend authorization services (Peanut & Partner), retrieves user profile statistics, displays interactive trading signals with pair and date range filters, and parses SOAP promo materials with automated domain replacement.
+A mobile application built with Flutter using Clean Architecture and BLoC for state management. The app integrates with two backend services (Peanut & Partner), displays user profile details, provides interactive trading signals with currency and date filtering, and parses promo materials from a SOAP service.
 
 ---
 
-## 🚀 Key Features
+## Features
 
-1. **Dual Service Authorization (Peanut & Partner)**
-   - Concurrent token acquisition from Peanut POST `IsAccountCredentialsCorrect` and Partner POST `RequestMoblieCabinetApiToken`.
+1. **Dual Service Authentication (Peanut & Partner)**
+   - Concurrent authentication against Peanut (`IsAccountCredentialsCorrect`) and Partner (`RequestMoblieCabinetApiToken`) endpoints using `Future.wait()`.
    - Local token persistence via `SharedPreferences`.
-   - Re-authorization support, session expiration handling, and clean logout flow.
-   - User-friendly floating error feedback.
+   - Handles session expiration, re-authentication, and clean logout.
+   - User feedback via snackbars for network and auth errors.
 
-2. **User Profile & Security**
-   - Retrieves account metrics from Peanut service (`GetAccountInformation` & `GetLastFourNumbersPhone`).
-   - Displays user balance, equity, free margin, leverage, location, and masked phone (`********0000`).
-   - Resilient fallback handling if server endpoints return temporary 500 errors.
+2. **User Profile**
+   - Fetches account data from Peanut (`GetAccountInformation` and `GetLastFourNumbersPhone`).
+   - Displays balance, equity, free margin, leverage, account type, and masked phone number (`********0000`).
+   - Fallback data handling in case the test server encounters errors.
 
-3. **Trading Signals Archive**
-   - Interactive GET request to Partner service `GetAnalyticSignals/{login}` using `passkey` header authorization.
-   - Filterable currency pair chips (`EURUSD`, `GBPUSD`, `USDJPY`, `USDCHF`, `USDCAD`, `AUDUSD`, `NZDUSD`).
-   - Custom date range selector (`showDateRangePicker`).
-   - Card list displaying signal action (BUY/SELL badges), entry price, Take Profit, Stop Loss, timestamp, and analyst notes.
+3. **Trading Signals**
+   - Fetches signal history from Partner service (`GetAnalyticSignals/{login}`) with `passkey` header.
+   - Filter chips for currency pairs (`EURUSD`, `GBPUSD`, `USDJPY`, `USDCHF`, `USDCAD`, `AUDUSD`, `NZDUSD`).
+   - Date range picker to filter signals by time range.
+   - Displays signal action (BUY / SELL), entry price, Take Profit, Stop Loss, timestamp, and analyst commentary.
 
-4. **SOAP Promo Materials**
-   - Executes SOAP WSDL request `GetCCPromo` (`lang=en`) to `CabinetMicroService.svc`.
-   - Parses XML response to extract embedded JSON result string.
-   - Automatic image domain replacement: `forex-images.instaforex.com` → `forex-images.ifxdb.com`.
-   - External browser link launching using `url_launcher`.
-   - Custom SSL certificate exception handling for expired backend certificate host.
-
----
-
-## 🛠 Challenges Faced & Solutions
-
-### 1. SSL Certificate Handshake Exception (`HandshakeException`)
-* **Problem:** Network calls to test servers (`contentdatapro.com` and `ifxdb.com`) failed due to expired SSL certificates on the backend endpoints.
-* **Root Cause:** The backend server SSL certificates were expired, causing Dart's default `HttpClient` to reject connections.
-* **Solution:** Added a custom `badCertificateCallback` in `ApiClient` to safely permit handshake for test environment hosts:
-  ```dart
-  final ioClient = HttpClient()
-    ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-      if (host.contains('contentdatapro.com') || host.contains('ifxdb.com')) {
-        return true;
-      }
-      return true;
-    };
-  ```
-
-### 2. SOAP XML & Non-Standard Python JSON Formatting
-* **Problem:** The `GetCCPromo` SOAP service returned XML containing unescaped HTML entities (`&lt;`, `&gt;`) and Python booleans (`True` / `False`), which caused `jsonDecode()` to crash with `FormatException`.
-* **Root Cause:** Embedded JSON inside XML tags used Python string representations rather than strict JSON format.
-* **Solution:** Created `SoapParser.extractGetCCPromoResultJson()` to clean XML markup, unescape entities, and convert Python booleans (`: True` / `: False`) to valid JSON (`: true` / `: false`) prior to parsing:
-  ```dart
-  String jsonText = match.group(1)!;
-  jsonText = jsonText
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
-      .replaceAll('&quot;', '"')
-      .replaceAll('&amp;', '&')
-      .replaceAll(': False', ': false')
-      .replaceAll(': True', ': true');
-  ```
-
-### 3. Obsolete Image Domain References
-* **Problem:** Image URLs in promo materials pointed to `forex-images.instaforex.com`, which failed to load images in UI.
-* **Root Cause:** Legacy domain server was unreachable or deprecated.
-* **Solution:** Added automatic domain string replacement inside `SoapParser` to replace `forex-images.instaforex.com` with `forex-images.ifxdb.com`:
-  ```dart
-  item['image'] = (item['image'] as String).replaceAll(
-    'forex-images.instaforex.com',
-    'forex-images.ifxdb.com',
-  );
-  ```
-
-### 4. Dual-Service Concurrent Authentication Flow
-* **Problem:** User login required requesting tokens simultaneously from two distinct backend APIs (Peanut API & Partner API) without slowing down UX.
-* **Root Cause:** Peanut API provides profile data while Partner API handles trading signals passkeys.
-* **Solution:** Utilized `Future.wait()` in `AuthRepositoryImpl` to trigger both POST requests in parallel and persist both tokens in local storage:
-  ```dart
-  final results = await Future.wait([
-    remoteDataSource.loginPeanut(login: login, password: password),
-    remoteDataSource.loginPartner(login: login, password: password),
-  ]);
-  ```
-
-### 5. Flutter SDK 3.27+ Deprecation Warnings & Linter Strictness
-* **Problem:** Flutter SDK raised deprecation warnings for `Color.withOpacity()` and missing `const` constructors on BLoC states.
-* **Root Cause:** API changes in recent Flutter framework updates.
-* **Solution:** Refactored opacity methods to `Color.withValues(alpha: ...)` and enforced strict `const` immutability across all state objects and static widgets.
+4. **Promo Materials**
+   - Calls SOAP WSDL service `GetCCPromo` with `lang=en`.
+   - Extracts embedded JSON data from XML response, handling unescaped entities and non-standard boolean literals.
+   - Replaces `forex-images.instaforex.com` with `forex-images.ifxdb.com`.
+   - External link navigation using `url_launcher`.
 
 ---
 
-## 🏗 Architecture & Technical Decisions
+## Technical Notes & Implementation Details
 
-The application follows **Clean Architecture** structured by feature modules:
+- **Dio & Retrofit Networking**: Client-server communication is handled with `Dio` and type-safe `Retrofit` services (`PeanutApiService`, `PartnerApiService`, `SoapApiService`) in the DataSource layer.
+- **DTOs vs. Entities Separation**: Strict separation between Data Transfer Objects (DTOs with JSON serialization in `data/models/`) and pure domain Entities (`domain/entities/`). Repositories map DTOs to Entities via `toEntity()`.
+- **Inter-Module Communication via UseCases**: Features communicate with each other through Domain UseCases (e.g. `GetProfileUseCase` and `GetSignalsUseCase` interact with `AuthRepository` to obtain session tokens) rather than coupling BLoCs or leaking state across presentation boundaries.
+- **Local BLoC Scoping (No MultiBlocProvider)**: Avoids global `MultiBlocProvider` anti-pattern. Global auth status is managed with a single root `BlocProvider<AuthBloc>`, while `ProfileBloc`, `SignalsBloc`, and `PromoBloc` are scoped locally to their respective feature views.
+- **Expired SSL Certificates on Test Endpoints**: The test servers (`contentdatapro.com` and `ifxdb.com`) have expired SSL certificates. To prevent `HandshakeException`, a custom `badCertificateCallback` is configured on the `IOHttpClientAdapter` in `dio_client.dart` for these hosts.
+- **Parsing SOAP XML with Embedded JSON**: The `GetCCPromo` SOAP endpoint returns XML containing a JSON string inside `<GetCCPromoResult>`. The text contains HTML entities (`&lt;`, `&gt;`, `&quot;`) and Python boolean literals (`: True`, `: False`). `SoapParser` unescapes these entities and normalizes booleans before decoding with `jsonDecode()`.
+- **Promo Image Domain Replacement**: As specified in the requirements, URLs pointing to `forex-images.instaforex.com` are dynamically mapped to `forex-images.ifxdb.com`.
+- **Dependency Injection**: Registered with `GetIt` in `core/di/injection_container.dart` for clean decoupling and testability.
+
+---
+
+## Architecture
+
+The project follows Clean Architecture principles structured by feature:
 
 ```
 lib/
 ├── core/
-│   ├── constants/       # API endpoints, colors, and test account credentials
-│   ├── errors/          # Exception and Failure hierarchy
-│   ├── network/         # ApiClient (HTTP/SOAP client with bad certificate handling)
-│   ├── storage/         # TokenStorage (local persistence)
-│   ├── theme/           # Material 3 Light/Dark adaptive themes
-│   └── utils/           # SoapParser (XML parsing & domain replacement)
+│   ├── constants/       # API endpoints, colors
+│   ├── di/              # GetIt dependency injection setup
+│   ├── errors/          # Exceptions and Failures
+│   ├── network/         # Dio client, Retrofit services, SOAP client
+│   ├── storage/         # TokenStorage (SharedPreferences wrapper)
+│   ├── theme/           # Light and dark Material 3 themes
+│   └── utils/           # SoapParser
 ├── features/
-│   ├── auth/            # Data, Domain, and Presentation (BLoC + UI) for Authentication
-│   ├── profile/         # Data, Domain, and Presentation for User Profile
-│   ├── signals/         # Data, Domain, and Presentation for Trading Signals Archive
-│   └── promo/           # Data, Domain, and Presentation for Promo Materials
-├── main_screen.dart     # Responsive Shell (BottomNavigationBar / NavigationRail)
-└── main.dart            # Dependency injection & application entry point
+│   ├── auth/            # Data (DTOs/DataSource/Repo), Domain (Entities/Repo/UseCases), Presentation (BLoC/UI)
+│   ├── profile/         # Data, Domain, and Presentation for Profile
+│   ├── signals/         # Data, Domain, and Presentation for Signals
+│   └── promo/           # Data, Domain, and Presentation for Promo
+├── main_screen.dart     # Responsive root navigation
+└── main.dart            # App entry point
 ```
 
-### Architectural Highlights
-- **Separation of Concerns**: Presentation (UI Widgets & BLoC), Domain (Pure Dart Entities & Repository Interfaces), Data (Models, Data Sources, & Repository Implementations).
-- **State Management**: `flutter_bloc` with `Equatable` for immutable, predictable state transitions.
-- **Responsive Layout**: Supports phones and tablets with adaptive `NavigationRail` / `BottomNavigationBar` transitions.
+- **Data Layer**: Retrofit/Dio API data sources, DTOs (`*Dto`), and repository implementations.
+- **Domain Layer**: Pure Dart entities, abstract repository contracts, and UseCases coordinating business logic and inter-module communication.
+- **Presentation Layer**: Scoped BLoCs and UI widgets.
 
 ---
 
-## 📋 Technical Test Answers & Candidate Information
+## Candidate Questionnaire
 
-### Prompt Survey Answers
+### Multiple Choice Questions
 - **1.** 1(b) - I adjusted my approach after analyzing alternatives.
 - **2.** 2(b) - I’d listen and find a compromise.
 - **3.** 3(b) - I’d assess feasibility and adjust if possible.
@@ -131,58 +83,58 @@ lib/
 
 ---
 
-### Additional Questions Answers
+### Additional Questions
 
 #### 1. Top 1 to 3 areas of expertise
 1. Flutter App Architecture & BLoC State Management
-2. REST & SOAP Network Integration with Offline Resilience
-3. Cross-Platform Mobile UI/UX & Responsive Layouts
+2. REST & SOAP Network Integration with Offline Handling
+3. Cross-Platform Responsive UI Development
 
 #### 2. Main areas worked in over past 5 years
-1. Production Flutter Application Development (FinTech & E-commerce platforms)
-2. Reactive Programming & Clean Architecture Implementation
-3. CI/CD Pipeline Configuration & Automated Mobile Testing
+1. Production Flutter Application Development (FinTech & E-commerce)
+2. State Management & Clean Architecture Implementation
+3. CI/CD Pipeline Setup & Automated Testing
 
 #### 3. Reason for differences (if any)
-My top areas of expertise align directly with my main work focus over the past 5 years, maintaining a strong commitment to high-performance Flutter engineering standards.
+None. My core expertise directly aligns with my primary focus over the past 5 years.
 
 #### 4. Top 1 to 3 areas to develop over next 10 years
-1. On-Device Machine Learning Integration (LiteRT & ML Kit)
-2. Native Mobile Performance Profiling & Native C++/Rust Interoperability
-3. High-Scale Mobile Ecosystem Architecture
+1. On-Device Machine Learning (LiteRT & ML Kit)
+2. Native Mobile Performance Profiling & C++/Rust interop
+3. Large-Scale Mobile System Architecture
 
 #### 5. Driving force for future goals
-The increasing demand for private on-device intelligence, ultra-low latency mobile experiences, and complex multi-platform systems.
+Interest in on-device AI integration and deeper low-level performance optimization to build faster, smarter mobile applications.
 
 #### 6. Strongest personal qualities
-1. Analytical problem solving and architectural discipline
-2. Adaptability under shifting project requirements
-3. Clear technical communication and team collaboration
+1. Strong focus on clean, maintainable architecture
+2. Adaptability when project requirements change
+3. Clear communication and collaborative teamwork
 
 #### 7. Personal weaknesses
-1. Tendency to over-engineer early prototypes before validation
-2. High self-expectation when balancing delivery speed vs perfection
+1. Tendency to spend too much time perfecting early architecture before validating
+2. Can be hesitant to leave code un-refactored when moving fast
 
 #### 8. Steps taken to address weaknesses
-Applying strict time-boxing, delivering functional MVPs first, and utilizing structured design reviews before refactoring.
+Setting strict time limits, delivering functional MVPs first to gather early feedback, and scheduling refactoring in subsequent iterations.
 
 ---
 
-### 💼 Job Placement Details
+## Job Placement Details
 
-#### 1. Flutter Developer
+### 1. Flutter Developer
 - **Company Name**: WebSolutionUs
 - **Duration**: 1 Jul 2026 - Continuing
 - **Nature of Business**: Software Solutions & Mobile Product Studio
-- **Duties**: Architecting cross-platform Flutter applications, implementing BLoC state management, API integration, code review, and performance optimization.
-- **Reason looking for new opportunities**: Seeking senior roles in high-growth, product-centric engineering environments.
+- **Duties**: Architecting cross-platform Flutter applications, implementing BLoC state management, API integration, code reviews, and performance tuning.
+- **Reason looking for new opportunities**: Looking for senior roles in product-focused engineering teams.
 
-#### 2. Flutter Developer
+### 2. Flutter Developer
 - **Company Name**: Acnoo
 - **Duration**: 1 Jan 2023 - 1 Jul 2026
 - **Nature of Business**: Mobile App Development Studio
-- **Duties**: Developed feature modules, customized Material design UI components, integrated payment gateways, and wrote unit/widget test suites.
-- **Leaving reason**: Transitioned to broaden technical scope and engineering impact.
+- **Duties**: Developed feature modules, customized Material design UI components, integrated payment gateways, and wrote unit/widget tests.
+- **Leaving reason**: Looking to broaden technical scope and engineering impact.
 
 - **Career Gap**: None.
 - **Reference**: Available upon request.
@@ -190,44 +142,57 @@ Applying strict time-boxing, delivering functional MVPs first, and utilizing str
 
 ---
 
-## 🛠 Additional Architectural Question (README Requirement)
+## Reusable Verification Module Flow (Additional Question)
 
-### Reusable Verification Module Flow Across Multiple Mobile Applications
+When designing a verification module to be shared across multiple mobile applications:
 
-When building a verification module shared across multiple applications:
+1. **Package Isolation**:
+   - Extract the verification flow into an independent Flutter package (e.g. `packages/verification_module`).
+   - The package defines its own data, domain, and presentation layers without importing host app code.
 
-1. **Module Package Isolation**: Extract the verification module into an independent Flutter package (`packages/core_verification`) containing its own data, domain, and presentation layers.
-2. **Dependency Isolation**: Use abstract interfaces for external contracts (e.g., `AuthenticationProvider`, `TokenStorageProvider`, `NavigationDelegate`). The parent host application injects concrete implementations via DI (GetIt or Provider) without the package depending on host application classes.
-3. **Navigation & Flow Management**:
-   - Expose a clean navigator entry point (e.g., `VerificationFlow.launch(BuildContext context, {required VerificationConfig config})`).
-   - Use internal nested navigation or explicit callback delegates (`onVerificationSuccess(VerificationToken token)`, `onVerificationCancelled()`) to pass flow control back to the host app cleanly.
-4. **Configuration & Customization**: Pass a `VerificationThemeConfig` object to adapt branding (colors, logos, strings) per app while maintaining 100% core logic reuse across the mobile ecosystem.
+2. **Dependency Inversion & Contracts**:
+   - Define abstract interfaces inside the module for external dependencies (e.g. `AuthTokenProvider`, `VerificationNetworkService`, `VerificationAnalytics`).
+   - The host application implements these interfaces and injects them when initializing the module.
+
+3. **Navigation & Flow Control**:
+   - Provide a simple entry point:
+     ```dart
+     VerificationModule.start(
+       context,
+       config: VerificationConfig(theme: appTheme, mode: VerificationMode.kyc),
+       onSuccess: (result) => handleSuccess(result),
+       onCancel: () => handleCancel(),
+     );
+     ```
+   - Keep internal navigation self-contained within the module (using a nested Navigator or modal flow), returning results through callbacks or a returned Future.
+
+4. **Theming & Customization**:
+   - Accept a configuration object (`VerificationThemeConfig`) to allow each host app to supply its own branding (colors, typography, logo, localized strings) while sharing 100% of the underlying business logic.
 
 ---
 
-## ⏱ Time Estimation
+## Time Estimation
 
 - **Estimated implementation time**: 6.0 hours
 - **Actual time spent**: 5.5 hours
 
 ---
 
-## ⚙️ How to Run the Project
+## How to Run the Project
 
-1. Ensure Flutter SDK (3.12+) is installed.
-2. Run dependency resolution:
+1. Install dependencies:
    ```bash
    flutter pub get
    ```
-3. Run unit tests:
+2. Run tests:
    ```bash
    flutter test
    ```
-4. Run the application:
+3. Run the app:
    ```bash
    flutter run
    ```
-5. Build production APK:
+4. Build release APK:
    ```bash
    flutter build apk --release
    ```

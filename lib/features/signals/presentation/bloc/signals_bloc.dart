@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
-import '../../domain/repositories/signals_repository.dart';
+import '../../domain/usecases/get_signals_usecase.dart';
 import 'signals_event.dart';
 import 'signals_state.dart';
 
 class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
-  final SignalsRepository _signalsRepository;
+  final GetSignalsUseCase _getSignalsUseCase;
 
-  SignalsBloc({required this._signalsRepository})
+  SignalsBloc(this._getSignalsUseCase)
     : super(
         SignalsInitial(
           selectedPairs: const ['EURUSD', 'GBPUSD', 'USDJPY'],
@@ -24,47 +24,45 @@ class SignalsBloc extends Bloc<SignalsEvent, SignalsState> {
     FetchSignalsEvent event,
     Emitter<SignalsState> emit,
   ) async {
+    final pairs = event.pairs ?? state.selectedPairs;
+    final fromDate = event.fromDate ?? state.fromDate;
+    final toDate = event.toDate ?? state.toDate;
+
     emit(
-      SignalsLoading(
-        selectedPairs: event.pairs,
-        fromDate: event.fromDate,
-        toDate: event.toDate,
-      ),
+      SignalsLoading(selectedPairs: pairs, fromDate: fromDate, toDate: toDate),
     );
 
     try {
-      final signals = await _signalsRepository.getAnalyticSignals(
-        login: event.login,
-        partnerToken: event.partnerToken,
-        pairs: event.pairs,
-        fromDate: event.fromDate,
-        toDate: event.toDate,
+      final signals = await _getSignalsUseCase(
+        pairs: pairs,
+        fromDate: fromDate,
+        toDate: toDate,
       );
 
       emit(
         SignalsLoaded(
           signals: signals,
-          selectedPairs: event.pairs,
-          fromDate: event.fromDate,
-          toDate: event.toDate,
+          selectedPairs: pairs,
+          fromDate: fromDate,
+          toDate: toDate,
         ),
       );
     } on Failure catch (failure) {
       emit(
         SignalsError(
           message: failure.message,
-          selectedPairs: event.pairs,
-          fromDate: event.fromDate,
-          toDate: event.toDate,
+          selectedPairs: pairs,
+          fromDate: fromDate,
+          toDate: toDate,
         ),
       );
     } catch (e) {
       emit(
         SignalsError(
           message: 'Error fetching signals: $e',
-          selectedPairs: event.pairs,
-          fromDate: event.fromDate,
-          toDate: event.toDate,
+          selectedPairs: pairs,
+          fromDate: fromDate,
+          toDate: toDate,
         ),
       );
     }

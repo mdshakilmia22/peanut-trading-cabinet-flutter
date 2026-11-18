@@ -1,31 +1,28 @@
-import '../../../../core/constants/api_constants.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../../../core/network/api_client.dart';
-import '../../domain/entities/auth_tokens.dart';
+import '../../../../core/network/partner_api_service.dart';
+import '../../../../core/network/peanut_api_service.dart';
+import '../models/auth_tokens_dto.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<AuthTokens> authenticate({
+  Future<AuthTokensDto> authenticate({
     required String login,
     required String password,
   });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final ApiClient _apiClient;
+  final PeanutApiService _peanutApiService;
+  final PartnerApiService _partnerApiService;
 
-  AuthRemoteDataSourceImpl(this._apiClient);
+  AuthRemoteDataSourceImpl(this._peanutApiService, this._partnerApiService);
 
   @override
-  Future<AuthTokens> authenticate({
+  Future<AuthTokensDto> authenticate({
     required String login,
     required String password,
   }) async {
-    final body = {
-      'login': login,
-      'password': password,
-    };
+    final body = {'login': login, 'password': password};
 
-    // Authenticate with both Peanut & Partner services in parallel
     final results = await Future.wait([
       _authenticatePeanut(body),
       _authenticatePartner(body),
@@ -38,7 +35,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw AuthException(message: 'Failed to retrieve authorization tokens.');
     }
 
-    return AuthTokens(
+    return AuthTokensDto(
       peanutToken: peanutToken,
       partnerToken: partnerToken,
       login: login,
@@ -46,33 +43,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   Future<String> _authenticatePeanut(Map<String, dynamic> body) async {
-    final response = await _apiClient.postJson(
-      ApiConstants.peanutAuthEndpoint,
-      body: body,
-    );
-
-    if (response is Map<String, dynamic>) {
-      final bool result = response['result'] ?? false;
-      final String? token = response['token'];
-
-      if (result && token != null && token.isNotEmpty) {
-        return token;
+    try {
+      final response = await _peanutApiService.checkCredentials(body);
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final bool result = data['result'] ?? false;
+        final String? token = data['token'];
+        if (result && token != null && token.isNotEmpty) {
+          return token;
+        }
       }
+      throw AuthException(message: 'Invalid credentials for Peanut Service.');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException(message: 'Peanut authentication error: $e');
     }
-    throw AuthException(message: 'Invalid credentials for Peanut Service.');
   }
 
   Future<String> _authenticatePartner(Map<String, dynamic> body) async {
-    final response = await _apiClient.postJson(
-      ApiConstants.partnerAuthEndpoint,
-      body: body,
-    );
-
-    if (response is String && response.isNotEmpty) {
-      return response.replaceAll('"', '').trim();
-    } else if (response is Map<String, dynamic> && response['token'] != null) {
-      return response['token'].toString();
+    try {
+      final response = await _partnerApiService.requestMobileCabinetApiToken(
+        body,
+      );
+      final data = response.data;
+      if (data is String && data.isNotEmpty) {
+        return data.replaceAll('"', '').trim();
+      } else if (data is Map<String, dynamic> && data['token'] != null) {
+        return data['token'].toString();
+      }
+      throw AuthException(message: 'Invalid credentials for Partner Service.');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException(message: 'Partner authentication error: $e');
     }
-    throw AuthException(message: 'Invalid credentials for Partner Service.');
   }
 }

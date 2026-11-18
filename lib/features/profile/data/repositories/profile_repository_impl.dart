@@ -15,10 +15,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String peanutToken,
   }) async {
     try {
-      return await _remoteDataSource.fetchAccountInformation(
+      final dto = await _remoteDataSource.fetchAccountInformation(
         login: login,
         token: peanutToken,
       );
+      return dto.toEntity();
     } on NetworkException catch (e) {
       throw NetworkFailure(e.message);
     } on ServerException catch (e) {

@@ -14,11 +14,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    ProfilePage(),
-    SignalsPage(),
-    PromoPage(),
-  ];
+  final List<Widget> _pages = const [ProfilePage(), SignalsPage(), PromoPage()];
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +22,6 @@ class _MainScreenState extends State<MainScreen> {
     final isWideScreen = mediaQuery.size.width >= 640;
 
     if (isWideScreen) {
-      // Navigation Rail for Tablet / Desktop wide screens
       return Scaffold(
         body: Row(
           children: [
@@ -38,8 +33,12 @@ class _MainScreenState extends State<MainScreen> {
                 });
               },
               labelType: NavigationRailLabelType.all,
-              selectedIconTheme: const IconThemeData(color: AppColors.primaryLight),
-              unselectedIconTheme: const IconThemeData(color: AppColors.textSecondaryLight),
+              selectedIconTheme: const IconThemeData(
+                color: AppColors.primaryLight,
+              ),
+              unselectedIconTheme: const IconThemeData(
+                color: AppColors.textSecondaryLight,
+              ),
               destinations: const [
                 NavigationRailDestination(
                   icon: Icon(Icons.person_outline_rounded),
@@ -59,18 +58,16 @@ class _MainScreenState extends State<MainScreen> {
               ],
             ),
             const VerticalDivider(thickness: 1, width: 1),
-            Expanded(child: IndexedStack(index: _currentIndex, children: _pages)),
+            Expanded(
+              child: IndexedStack(index: _currentIndex, children: _pages),
+            ),
           ],
         ),
       );
     }
 
-    // Standard Bottom Navigation Bar for Mobile screens
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {

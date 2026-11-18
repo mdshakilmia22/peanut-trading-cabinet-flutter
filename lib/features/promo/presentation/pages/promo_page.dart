@@ -2,24 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/injection_container.dart';
 import '../bloc/promo_bloc.dart';
 import '../bloc/promo_event.dart';
 import '../bloc/promo_state.dart';
 
-class PromoPage extends StatefulWidget {
+class PromoPage extends StatelessWidget {
   const PromoPage({super.key});
 
   @override
-  State<PromoPage> createState() => _PromoPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => getIt<PromoBloc>()..add(FetchPromoEvent()),
+      child: const _PromoView(),
+    );
+  }
 }
 
-class _PromoPageState extends State<PromoPage> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<PromoBloc>().add(FetchPromoEvent());
-  }
+class _PromoView extends StatefulWidget {
+  const _PromoView();
 
+  @override
+  State<_PromoView> createState() => _PromoViewState();
+}
+
+class _PromoViewState extends State<_PromoView> {
   Future<void> _launchExternalUrl(
     BuildContext context,
     String urlString,
@@ -102,7 +109,6 @@ class _PromoPageState extends State<PromoPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Promo Graphic Header Image
                         if (promo.imageUrl.isNotEmpty)
                           AspectRatio(
                             aspectRatio: 16 / 7,
@@ -149,7 +155,6 @@ class _PromoPageState extends State<PromoPage> {
                             ),
                           ),
 
-                        // Promo Details & CTA
                         Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(

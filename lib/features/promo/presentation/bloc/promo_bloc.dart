@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
-import '../../domain/repositories/promo_repository.dart';
+import '../../domain/usecases/get_promo_materials_usecase.dart';
 import 'promo_event.dart';
 import 'promo_state.dart';
 
 class PromoBloc extends Bloc<PromoEvent, PromoState> {
-  final PromoRepository _promoRepository;
+  final GetPromoMaterialsUseCase _getPromoMaterialsUseCase;
 
-  PromoBloc({required this._promoRepository}) : super(PromoInitial()) {
+  PromoBloc(this._getPromoMaterialsUseCase) : super(PromoInitial()) {
     on<FetchPromoEvent>(_onFetchPromo);
     on<RefreshPromoEvent>(_onRefreshPromo);
   }
@@ -18,7 +18,7 @@ class PromoBloc extends Bloc<PromoEvent, PromoState> {
   ) async {
     emit(PromoLoading());
     try {
-      final promos = await _promoRepository.getCCPromoMaterials();
+      final promos = await _getPromoMaterialsUseCase();
       emit(PromoLoaded(promos));
     } on Failure catch (failure) {
       emit(PromoError(failure.message));
@@ -32,7 +32,7 @@ class PromoBloc extends Bloc<PromoEvent, PromoState> {
     Emitter<PromoState> emit,
   ) async {
     try {
-      final promos = await _promoRepository.getCCPromoMaterials();
+      final promos = await _getPromoMaterialsUseCase();
       emit(PromoLoaded(promos));
     } on Failure catch (failure) {
       emit(PromoError(failure.message));

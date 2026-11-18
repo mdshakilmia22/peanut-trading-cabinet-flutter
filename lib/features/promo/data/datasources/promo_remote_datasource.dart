@@ -1,19 +1,19 @@
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/soap_api_service.dart';
 import '../../../../core/utils/soap_parser.dart';
-import '../../domain/entities/promo_material.dart';
+import '../models/promo_material_dto.dart';
 
 abstract class PromoRemoteDataSource {
-  Future<List<PromoMaterial>> fetchCCPromo();
+  Future<List<PromoMaterialDto>> fetchCCPromo();
 }
 
 class PromoRemoteDataSourceImpl implements PromoRemoteDataSource {
-  final ApiClient _apiClient;
+  final SoapApiService _soapApiService;
 
-  PromoRemoteDataSourceImpl(this._apiClient);
+  PromoRemoteDataSourceImpl(this._soapApiService);
 
   @override
-  Future<List<PromoMaterial>> fetchCCPromo() async {
+  Future<List<PromoMaterialDto>> fetchCCPromo() async {
     const soapEnvelope = '''<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -26,8 +26,8 @@ class PromoRemoteDataSourceImpl implements PromoRemoteDataSource {
     const soapAction = 'http://tempuri.org/CabinetMicroService/GetCCPromo';
 
     try {
-      final xmlResponse = await _apiClient.postSoap(
-        ApiConstants.promoWsdlUrl,
+      final xmlResponse = await _soapApiService.requestSoap(
+        url: ApiConstants.promoWsdlUrl,
         soapEnvelope: soapEnvelope,
         soapAction: soapAction,
       );
@@ -35,20 +35,20 @@ class PromoRemoteDataSourceImpl implements PromoRemoteDataSource {
       final jsonText = SoapParser.extractGetCCPromoResultJson(xmlResponse);
       final rawItems = SoapParser.parsePromoItems(jsonText);
 
-      return rawItems.map((map) => _mapToPromoMaterial(map)).toList();
+      return rawItems.map((map) => _mapToPromoMaterialDto(map)).toList();
     } catch (e) {
       return _generateFallbackPromos();
     }
   }
 
-  PromoMaterial _mapToPromoMaterial(Map<String, dynamic> map) {
+  PromoMaterialDto _mapToPromoMaterialDto(Map<String, dynamic> map) {
     String imageUrl = map['image']?.toString() ?? '';
     imageUrl = imageUrl.replaceAll(
       ApiConstants.originalPromoImageDomain,
       ApiConstants.replacePromoImageDomain,
     );
 
-    return PromoMaterial(
+    return PromoMaterialDto(
       key: map['promo_key']?.toString() ?? 'promo',
       imageUrl: imageUrl,
       text: map['text']?.toString() ?? 'Exclusive Partner Promotion',
@@ -58,36 +58,45 @@ class PromoRemoteDataSourceImpl implements PromoRemoteDataSource {
     );
   }
 
-  List<PromoMaterial> _generateFallbackPromos() {
+  List<PromoMaterialDto> _generateFallbackPromos() {
     return const [
-      PromoMaterial(
+      PromoMaterialDto(
         key: 'forex_copy',
-        imageUrl: 'https://forex-images.ifxdb.com/interestingknow/thumb/608022d9f16b9.png',
-        text: 'Forex Copy - Professionals trade, you earn with automated copying.',
-        link: 'https://play.google.com/store/apps/details?id=com.instaforex.android.forexcopy',
+        imageUrl:
+            'https://forex-images.ifxdb.com/interestingknow/thumb/608022d9f16b9.png',
+        text:
+            'Forex Copy - Professionals trade, you earn with automated copying.',
+        link:
+            'https://play.google.com/store/apps/details?id=com.instaforex.android.forexcopy',
         buttonText: 'Start earning today',
         buttonColor: '#3A469A',
       ),
-      PromoMaterial(
+      PromoMaterialDto(
         key: 'ferrari',
-        imageUrl: 'https://forex-images.ifxdb.com/company_news/userfiles/ferrari.png',
-        text: 'Open a trading account and participate in the raffle of the Ferrari F8 Tributo supercar!',
+        imageUrl:
+            'https://forex-images.ifxdb.com/company_news/userfiles/ferrari.png',
+        text:
+            'Open a trading account and participate in the raffle of the Ferrari F8 Tributo supercar!',
         link: 'https://www.instaforex.com/en/ferrari?x=mobcab',
         buttonText: 'I want to win a Ferrari!',
         buttonColor: '#ca3131',
       ),
-      PromoMaterial(
+      PromoMaterialDto(
         key: 'tether',
-        imageUrl: 'https://forex-images.ifxdb.com/interestingknow/5f6209c90f127.png',
-        text: 'Now you can make a deposit to your account with the most stable cryptocurrency - Tether!',
+        imageUrl:
+            'https://forex-images.ifxdb.com/interestingknow/5f6209c90f127.png',
+        text:
+            'Now you can make a deposit to your account with the most stable cryptocurrency - Tether!',
         link: 'https://secure.instaforex.com/deposit/b2binpay-preview?lang=en',
         buttonText: 'Make a deposit!',
         buttonColor: '#00a27b',
       ),
-      PromoMaterial(
+      PromoMaterialDto(
         key: 'lucky_deposit',
-        imageUrl: 'https://forex-images.ifxdb.com/company_news/userfiles/lucky_deposit.png',
-        text: 'Make a deposit today and get the chance to win \$8,000 in monthly draw',
+        imageUrl:
+            'https://forex-images.ifxdb.com/company_news/userfiles/lucky_deposit.png',
+        text:
+            'Make a deposit today and get the chance to win \$8,000 in monthly draw',
         link: 'https://secure.instaforex.com/en/deposits?x=mobcab',
         buttonText: 'Deposit money now',
         buttonColor: '#EAB308',

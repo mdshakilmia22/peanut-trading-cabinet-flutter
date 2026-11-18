@@ -20,19 +20,19 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final tokens = await _remoteDataSource.authenticate(
+      final tokensDto = await _remoteDataSource.authenticate(
         login: login,
         password: password,
       );
 
       await _tokenStorage.saveTokens(
-        peanutToken: tokens.peanutToken,
-        partnerToken: tokens.partnerToken,
-        login: tokens.login,
+        peanutToken: tokensDto.peanutToken,
+        partnerToken: tokensDto.partnerToken,
+        login: tokensDto.login,
         password: password,
       );
 
-      return tokens;
+      return tokensDto.toEntity();
     } on AuthException catch (e) {
       throw AuthFailure(e.message);
     } on NetworkException catch (e) {

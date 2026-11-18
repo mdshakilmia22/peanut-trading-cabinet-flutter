@@ -8,22 +8,14 @@ abstract class SignalsEvent extends Equatable {
 }
 
 class FetchSignalsEvent extends SignalsEvent {
-  final String login;
-  final String partnerToken;
-  final List<String> pairs;
-  final DateTime fromDate;
-  final DateTime toDate;
+  final List<String>? pairs;
+  final DateTime? fromDate;
+  final DateTime? toDate;
 
-  const FetchSignalsEvent({
-    required this.login,
-    required this.partnerToken,
-    required this.pairs,
-    required this.fromDate,
-    required this.toDate,
-  });
+  const FetchSignalsEvent({this.pairs, this.fromDate, this.toDate});
 
   @override
-  List<Object?> get props => [login, partnerToken, pairs, fromDate, toDate];
+  List<Object?> get props => [pairs, fromDate, toDate];
 }
 
 class TogglePairFilterEvent extends SignalsEvent {
@@ -39,10 +31,7 @@ class SelectDateRangeEvent extends SignalsEvent {
   final DateTime fromDate;
   final DateTime toDate;
 
-  const SelectDateRangeEvent({
-    required this.fromDate,
-    required this.toDate,
-  });
+  const SelectDateRangeEvent({required this.fromDate, required this.toDate});
 
   @override
   List<Object?> get props => [fromDate, toDate];

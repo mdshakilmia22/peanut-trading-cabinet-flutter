@@ -3,40 +3,34 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../domain/entities/analytic_signal.dart';
 import '../bloc/signals_bloc.dart';
 import '../bloc/signals_event.dart';
 import '../bloc/signals_state.dart';
 
-class SignalsPage extends StatefulWidget {
+class SignalsPage extends StatelessWidget {
   const SignalsPage({super.key});
 
   @override
-  State<SignalsPage> createState() => _SignalsPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => getIt<SignalsBloc>()..add(const FetchSignalsEvent()),
+      child: const _SignalsView(),
+    );
+  }
 }
 
-class _SignalsPageState extends State<SignalsPage> {
-  @override
-  void initState() {
-    super.initState();
-    _triggerFetch();
-  }
+class _SignalsView extends StatefulWidget {
+  const _SignalsView();
 
+  @override
+  State<_SignalsView> createState() => _SignalsViewState();
+}
+
+class _SignalsViewState extends State<_SignalsView> {
   void _triggerFetch() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      final blocState = context.read<SignalsBloc>().state;
-      context.read<SignalsBloc>().add(
-        FetchSignalsEvent(
-          login: authState.tokens.login,
-          partnerToken: authState.tokens.partnerToken,
-          pairs: blocState.selectedPairs,
-          fromDate: blocState.fromDate,
-          toDate: blocState.toDate,
-        ),
-      );
-    }
+    context.read<SignalsBloc>().add(const FetchSignalsEvent());
   }
 
   Future<void> _pickDateRange() async {
@@ -100,14 +94,12 @@ class _SignalsPageState extends State<SignalsPage> {
       ),
       body: Column(
         children: [
-          // Filter Header Bar (Currency Pairs & Date Range)
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             color: isDark ? AppColors.cardDark : Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Pair Chips Scrollable List
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -146,7 +138,6 @@ class _SignalsPageState extends State<SignalsPage> {
                 ),
                 const SizedBox(height: 8),
 
-                // Selected Date Range Banner
                 BlocBuilder<SignalsBloc, SignalsState>(
                   builder: (context, state) {
                     final dateFormat = DateFormat('dd MMM yyyy');
@@ -188,7 +179,6 @@ class _SignalsPageState extends State<SignalsPage> {
           ),
           const Divider(height: 1),
 
-          // Main List Content Body
           Expanded(
             child: BlocBuilder<SignalsBloc, SignalsState>(
               builder: (context, state) {
@@ -261,9 +251,13 @@ class _SignalsPageState extends State<SignalsPage> {
     );
   }
 
-  Widget _buildSignalCard(BuildContext context, dynamic signal, bool isDark) {
+  Widget _buildSignalCard(
+    BuildContext context,
+    AnalyticSignal signal,
+    bool isDark,
+  ) {
     final theme = Theme.of(context);
-    final isBuy = signal.action.contains('BUY');
+    final isBuy = signal.action.toUpperCase().contains('BUY');
     final actionColor = isBuy ? AppColors.buyGreen : AppColors.sellRed;
     final timeFormat = DateFormat('dd MMM yyyy, HH:mm');
 
@@ -273,7 +267,6 @@ class _SignalsPageState extends State<SignalsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Pair & Action Badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -341,7 +334,6 @@ class _SignalsPageState extends State<SignalsPage> {
             ),
             const SizedBox(height: 14),
 
-            // Price Details Row
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -374,7 +366,6 @@ class _SignalsPageState extends State<SignalsPage> {
             ),
             const SizedBox(height: 12),
 
-            // Analyst Comment
             Text(
               signal.comment,
               style: TextStyle(
@@ -401,12 +392,12 @@ class _SignalsPageState extends State<SignalsPage> {
             color: AppColors.textSecondaryLight,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
             fontWeight: FontWeight.bold,
+            fontSize: 14,
             color: color,
           ),
         ),
@@ -417,7 +408,7 @@ class _SignalsPageState extends State<SignalsPage> {
   Widget _buildEmptyState(ThemeData theme, bool isDark) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -437,7 +428,7 @@ class _SignalsPageState extends State<SignalsPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your currency pair selections or date range filters.',
+              'Try adjusting your selected currency pairs or selecting a wider date range.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isDark

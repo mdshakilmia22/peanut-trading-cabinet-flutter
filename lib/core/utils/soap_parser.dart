@@ -23,7 +23,6 @@ class SoapParser {
           .replaceAll(': False', ': false')
           .replaceAll(': True', ': true');
 
-      // Replace image domain
       jsonText = jsonText.replaceAll(
         ApiConstants.originalPromoImageDomain,
         ApiConstants.replacePromoImageDomain,
@@ -37,7 +36,6 @@ class SoapParser {
     );
   }
 
-  /// Converts promo JSON string into List of promo item maps
   static List<Map<String, dynamic>> parsePromoItems(String jsonText) {
     final decoded = json.decode(jsonText);
     final List<Map<String, dynamic>> items = [];

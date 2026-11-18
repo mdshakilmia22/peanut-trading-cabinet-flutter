@@ -1,13 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
-import '../../domain/repositories/profile_repository.dart';
+import '../../domain/usecases/get_profile_usecase.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  final ProfileRepository _profileRepository;
+  final GetProfileUseCase _getProfileUseCase;
 
-  ProfileBloc({required this._profileRepository}) : super(ProfileInitial()) {
+  ProfileBloc(this._getProfileUseCase) : super(ProfileInitial()) {
     on<FetchProfileEvent>(_onFetchProfile);
     on<RefreshProfileEvent>(_onRefreshProfile);
   }
@@ -18,10 +18,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     try {
-      final accountInfo = await _profileRepository.getAccountInformation(
-        login: event.login,
-        peanutToken: event.peanutToken,
-      );
+      final accountInfo = await _getProfileUseCase();
       emit(ProfileLoaded(accountInfo));
     } on Failure catch (failure) {
       emit(ProfileError(failure.message));
@@ -35,10 +32,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     Emitter<ProfileState> emit,
   ) async {
     try {
-      final accountInfo = await _profileRepository.getAccountInformation(
-        login: event.login,
-        peanutToken: event.peanutToken,
-      );
+      final accountInfo = await _getProfileUseCase();
       emit(ProfileLoaded(accountInfo));
     } on Failure catch (failure) {
       emit(ProfileError(failure.message));

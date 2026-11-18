@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 class AccountInfo extends Equatable {
   final int login;
   final String name;
-  final String phoneMask; // From GetLastFourNumbersPhone (e.g. ********0000)
+  final String phoneMask;
   final double balance;
   final double equity;
   final double freeMargin;
@@ -33,18 +33,18 @@ class AccountInfo extends Equatable {
 
   @override
   List<Object?> get props => [
-        login,
-        name,
-        phoneMask,
-        balance,
-        equity,
-        freeMargin,
-        leverage,
-        country,
-        city,
-        address,
-        verificationLevel,
-        type,
-        isPartialData,
-      ];
+    login,
+    name,
+    phoneMask,
+    balance,
+    equity,
+    freeMargin,
+    leverage,
+    country,
+    city,
+    address,
+    verificationLevel,
+    type,
+    isPartialData,
+  ];
 }

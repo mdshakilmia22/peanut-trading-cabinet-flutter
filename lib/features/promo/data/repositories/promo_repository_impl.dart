@@ -12,7 +12,8 @@ class PromoRepositoryImpl implements PromoRepository {
   @override
   Future<List<PromoMaterial>> getCCPromoMaterials() async {
     try {
-      return await _remoteDataSource.fetchCCPromo();
+      final dtos = await _remoteDataSource.fetchCCPromo();
+      return dtos.map((dto) => dto.toEntity()).toList();
     } on NetworkException catch (e) {
       throw NetworkFailure(e.message);
     } on ServerException catch (e) {

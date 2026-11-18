@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 class AnalyticSignal extends Equatable {
   final int id;
   final String pair;
-  final String action; // BUY, SELL, BUY LIMIT, SELL LIMIT, etc.
+  final String action;
   final double price;
   final String comment;
   final DateTime dateTime;
@@ -23,13 +23,13 @@ class AnalyticSignal extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        pair,
-        action,
-        price,
-        comment,
-        dateTime,
-        takeProfit,
-        stopLoss,
-      ];
+    id,
+    pair,
+    action,
+    price,
+    comment,
+    dateTime,
+    takeProfit,
+    stopLoss,
+  ];
 }

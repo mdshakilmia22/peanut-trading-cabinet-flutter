@@ -1,13 +1,24 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
-import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/check_auth_status_usecase.dart';
+import '../../domain/usecases/get_cached_tokens_usecase.dart';
+import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/logout_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _authRepository;
+  final LoginUseCase _loginUseCase;
+  final CheckAuthStatusUseCase _checkAuthStatusUseCase;
+  final LogoutUseCase _logoutUseCase;
+  final GetCachedTokensUseCase _getCachedTokensUseCase;
 
-  AuthBloc({required this._authRepository}) : super(AuthInitial()) {
+  AuthBloc(
+    this._loginUseCase,
+    this._checkAuthStatusUseCase,
+    this._logoutUseCase,
+    this._getCachedTokensUseCase,
+  ) : super(AuthInitial()) {
     on<CheckAuthStatusEvent>(_onCheckAuthStatus);
     on<LoginSubmittedEvent>(_onLoginSubmitted);
     on<LogoutSubmittedEvent>(_onLogoutSubmitted);
@@ -18,9 +29,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    final isAuthenticated = await _authRepository.checkAuthStatus();
+    final isAuthenticated = await _checkAuthStatusUseCase();
     if (isAuthenticated) {
-      final tokens = _authRepository.getCachedTokens();
+      final tokens = _getCachedTokensUseCase();
       if (tokens != null) {
         emit(Authenticated(tokens));
         return;
@@ -35,7 +46,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final tokens = await _authRepository.login(
+      final tokens = await _loginUseCase(
         login: event.login.trim(),
         password: event.password.trim(),
       );
@@ -52,7 +63,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    await _authRepository.logout();
+    await _logoutUseCase();
     emit(const Unauthenticated(message: 'Successfully logged out.'));
   }
 }

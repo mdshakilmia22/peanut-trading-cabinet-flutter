@@ -1,9 +1,8 @@
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_client.dart';
-import '../../domain/entities/analytic_signal.dart';
+import '../../../../core/network/partner_api_service.dart';
+import '../models/analytic_signal_dto.dart';
 
 abstract class SignalsRemoteDataSource {
-  Future<List<AnalyticSignal>> fetchAnalyticSignals({
+  Future<List<AnalyticSignalDto>> fetchAnalyticSignals({
     required String login,
     required String partnerToken,
     required List<String> pairs,
@@ -13,12 +12,12 @@ abstract class SignalsRemoteDataSource {
 }
 
 class SignalsRemoteDataSourceImpl implements SignalsRemoteDataSource {
-  final ApiClient _apiClient;
+  final PartnerApiService _partnerApiService;
 
-  SignalsRemoteDataSourceImpl(this._apiClient);
+  SignalsRemoteDataSourceImpl(this._partnerApiService);
 
   @override
-  Future<List<AnalyticSignal>> fetchAnalyticSignals({
+  Future<List<AnalyticSignalDto>> fetchAnalyticSignals({
     required String login,
     required String partnerToken,
     required List<String> pairs,
@@ -29,28 +28,24 @@ class SignalsRemoteDataSourceImpl implements SignalsRemoteDataSource {
     final fromTimestamp = (fromDate.millisecondsSinceEpoch / 1000).floor();
     final toTimestamp = (toDate.millisecondsSinceEpoch / 1000).floor();
 
-    final url = '${ApiConstants.partnerSignalsEndpoint}/$login';
-
-    final queryParams = {
-      'tradingsystem': '3',
-      'pairs': pairsString,
-      'from': fromTimestamp.toString(),
-      'to': toTimestamp.toString(),
-    };
-
-    final headers = {
-      'passkey': partnerToken,
-    };
-
     try {
-      final response = await _apiClient.getJson(
-        url,
-        queryParameters: queryParams,
-        headers: headers,
+      final response = await _partnerApiService.getAnalyticSignals(
+        login,
+        partnerToken,
+        '3',
+        pairsString,
+        fromTimestamp,
+        toTimestamp,
       );
 
-      if (response is List) {
-        return response.map((item) => _parseSignalItem(item)).toList();
+      final data = response.data;
+      if (data is List) {
+        return data
+            .map(
+              (item) =>
+                  AnalyticSignalDto.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
       }
     } catch (_) {
       return _generateFallbackSignals(pairs, fromDate, toDate);
@@ -59,44 +54,14 @@ class SignalsRemoteDataSourceImpl implements SignalsRemoteDataSource {
     return _generateFallbackSignals(pairs, fromDate, toDate);
   }
 
-  AnalyticSignal _parseSignalItem(dynamic item) {
-    if (item is Map<String, dynamic>) {
-      final id = (item['id'] as num?)?.toInt() ?? (item['Id'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch;
-      final pair = item['pair']?.toString() ?? item['Pair']?.toString() ?? 'EURUSD';
-      final action = item['cmd']?.toString() ?? item['Type']?.toString() ?? 'BUY';
-      final price = (item['price'] as num?)?.toDouble() ?? (item['Price'] as num?)?.toDouble() ?? 1.0850;
-      final comment = item['comment']?.toString() ?? item['Comment']?.toString() ?? 'Analytic signal recommendation';
-
-      final dateVal = item['date'] ?? item['Time'] ?? item['from'];
-      DateTime dateTime = DateTime.now();
-      if (dateVal is int) {
-        dateTime = DateTime.fromMillisecondsSinceEpoch(dateVal * 1000);
-      } else if (dateVal is String) {
-        dateTime = DateTime.tryParse(dateVal) ?? DateTime.now();
-      }
-
-      return AnalyticSignal(
-        id: id,
-        pair: pair,
-        action: action.toUpperCase(),
-        price: price,
-        comment: comment,
-        dateTime: dateTime,
-        takeProfit: (item['tp'] as num?)?.toDouble(),
-        stopLoss: (item['sl'] as num?)?.toDouble(),
-      );
-    }
-    throw FormatException('Invalid signal item structure');
-  }
-
-  List<AnalyticSignal> _generateFallbackSignals(
+  List<AnalyticSignalDto> _generateFallbackSignals(
     List<String> pairs,
     DateTime fromDate,
     DateTime toDate,
   ) {
     if (pairs.isEmpty) return [];
 
-    final List<AnalyticSignal> fallbackList = [];
+    final List<AnalyticSignalDto> fallbackList = [];
     final now = DateTime.now();
 
     final mockPrices = <String, double>{
@@ -117,7 +82,7 @@ class SignalsRemoteDataSourceImpl implements SignalsRemoteDataSource {
       'Key resistance level rejected. Target initial support line.',
       'RSI oversold divergence observed on 4H chart timeframe.',
       'Trendline continuation setup with tight stop loss risk management.',
-      'Consolidation phase breakout signal with high volume confirmation.'
+      'Consolidation phase breakout signal with high volume confirmation.',
     ];
 
     int count = 0;
@@ -129,9 +94,10 @@ class SignalsRemoteDataSourceImpl implements SignalsRemoteDataSource {
         final comment = mockComments[(count + i) % mockComments.length];
         final signalTime = now.subtract(Duration(hours: count * 5 + i * 12));
 
-        if (signalTime.isAfter(fromDate) && signalTime.isBefore(toDate.add(const Duration(days: 1)))) {
+        if (signalTime.isAfter(fromDate) &&
+            signalTime.isBefore(toDate.add(const Duration(days: 1)))) {
           fallbackList.add(
-            AnalyticSignal(
+            AnalyticSignalDto(
               id: 1000 + count,
               pair: pair,
               action: action,

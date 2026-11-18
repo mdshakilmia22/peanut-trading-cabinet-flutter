@@ -18,13 +18,14 @@ class SignalsRepositoryImpl implements SignalsRepository {
     required DateTime toDate,
   }) async {
     try {
-      return await _remoteDataSource.fetchAnalyticSignals(
+      final dtos = await _remoteDataSource.fetchAnalyticSignals(
         login: login,
         partnerToken: partnerToken,
         pairs: pairs,
         fromDate: fromDate,
         toDate: toDate,
       );
+      return dtos.map((dto) => dto.toEntity()).toList();
     } on NetworkException catch (e) {
       throw NetworkFailure(e.message);
     } on ServerException catch (e) {
